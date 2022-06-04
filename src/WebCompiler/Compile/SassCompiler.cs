@@ -28,6 +28,11 @@ namespace WebCompiler
             FileInfo info = new FileInfo(inputFile);
             string content = File.ReadAllText(info.FullName);
 
+            if (config.WildcardsValid(info))
+            {
+                info = CreateTempWildcardStylesheet(config, info);
+            }
+
             CompilerResult result = new CompilerResult
             {
                 FileName = info.FullName,
@@ -75,7 +80,57 @@ namespace WebCompiler
                 result.Errors.Add(error);
             }
 
+            if (config.WildcardsValid(info))
+            {
+                result.FileName = inputFile;
+                try
+                {
+                    info.Delete();
+                }
+                catch (IOException ioe)
+                {
+                    Console.WriteLine($"{ioe.GetType()} for '{info.FullName}': {ioe.Message}");
+                }
+
+            }
+
             return result;
+        }
+
+        private FileInfo CreateTempWildcardStylesheet(Config config, FileInfo info)
+        {
+            FileInfo wildcardStylesheet = new FileInfo(Path.Combine(info.Directory.FullName, "tmp." + info.Name));
+            //File.Copy(info.FullName, wildcardStylesheet.FullName);
+            foreach (string wildcard in config.WildcardImports.Keys)
+            {
+                string replacingImport = config.WildcardImports[wildcard];
+                string[] stylesheetLines = File.ReadAllLines(info.FullName);
+                for (int i = 0; i < stylesheetLines.Length; i++)
+                {
+                    string line = stylesheetLines[i];
+                    if (!line.Contains(wildcard)) { continue; }
+
+                    stylesheetLines[i] = $"@import \"{replacingImport}\";";
+
+                    break;
+                }
+
+                File.WriteAllLines(wildcardStylesheet.FullName, stylesheetLines);
+
+                //using (FileStream fs = wildcardStylesheet.OpenWrite())
+                //{
+                //    fs.Position = 0;
+                //    string import = $"@import \"{wildcardImport}\";" + Environment.NewLine;
+                //    byte[] buffer = Encoding.UTF8.GetBytes(import);
+                //    for (int i = 0; i < buffer.Length; i += 256)
+                //    {
+                //        int bufferSize = i + 256 > buffer.Length ? buffer.Length - i : 256;
+                //        fs.Write(buffer, i, bufferSize);
+                //    }
+
+                //}
+            }
+            return wildcardStylesheet;
         }
 
         private void RunCompilerProcess(Config config, FileInfo info)

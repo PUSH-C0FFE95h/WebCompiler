@@ -30,6 +30,12 @@ namespace WebCompiler
         public string InputFile { get; set; }
 
         /// <summary>
+        /// Replace an in the sass file as wildcard defined import with this import
+        /// </summary>
+        [JsonProperty("wildcardImports")]
+        public Dictionary<string, string> WildcardImports { get; set; } = new Dictionary<string, string>();
+
+        /// <summary>
         /// Settings for the minification.
         /// </summary>
         [JsonProperty("minify")]
@@ -80,6 +86,20 @@ namespace WebCompiler
             return new FileInfo(Path.Combine(folder, OutputFile.Replace("/", "\\")));
         }
 
+        public bool WildcardsValid(FileInfo info)
+        {
+            foreach (string wildcard in WildcardImports.Values)
+            {
+                string wildcardFile = Path.Combine(info.Directory.FullName, wildcard);
+                if (!new FileInfo(wildcardFile).Exists)
+                {
+                    return false;
+                }
+            }
+
+            return WildcardImports.Count > 0;
+        }
+
         /// <summary>
         /// Checks to see if the input file needs compilation
         /// </summary>
@@ -96,6 +116,7 @@ namespace WebCompiler
 
             return HasDependenciesNewerThanOutput(input, output);
         }
+
 
         private bool HasDependenciesNewerThanOutput(FileInfo input, FileInfo output)
         {
