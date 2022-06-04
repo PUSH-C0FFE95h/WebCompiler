@@ -117,18 +117,6 @@ namespace WebCompiler
 
                 File.WriteAllLines(wildcardStylesheet.FullName, stylesheetLines);
 
-                //using (FileStream fs = wildcardStylesheet.OpenWrite())
-                //{
-                //    fs.Position = 0;
-                //    string import = $"@import \"{wildcardImport}\";" + Environment.NewLine;
-                //    byte[] buffer = Encoding.UTF8.GetBytes(import);
-                //    for (int i = 0; i < buffer.Length; i += 256)
-                //    {
-                //        int bufferSize = i + 256 > buffer.Length ? buffer.Length - i : 256;
-                //        fs.Write(buffer, i, bufferSize);
-                //    }
-
-                //}
             }
             return wildcardStylesheet;
         }
